@@ -522,7 +522,6 @@ def get_sales_order_status_tree(sales_order_id):
                         fields=["parent"]
                     )
 
-
                     purchase_invoice_children = []
                     for pi_item in purchase_invoices:
                         pi_id = pi_item.parent
