@@ -7,6 +7,10 @@ app_license = "mit"
 
 # Apps
 # ------------------
+override_whitelisted_methods = {
+    "frappe.utils.change_log.get_versions": "brew.brew.overrides.get_versions.custom_get_app_versions"
+}
+
 
 # required_apps = []
 

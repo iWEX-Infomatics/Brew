@@ -518,7 +518,7 @@ def get_sales_order_status_tree(sales_order_id):
 
                     # Get Purchase Invoices that have this Stone Transaction in items
                     purchase_invoices = frappe.get_all("Purchase Invoice Item", 
-                        filters={"custom_stone_transaction_id": transaction_id}, 
+                        filters={"custom_stone_confirmation_id": transaction_id}, 
                         fields=["parent"]
                     )
 
