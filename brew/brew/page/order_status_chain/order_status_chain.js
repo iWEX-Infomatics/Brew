@@ -329,17 +329,14 @@ function applyFilters() {
                 html += '</div>';
                 resultDiv.html(html);
                 
-                // Update counts based on filtered results
                 updateFilteredCounts(r.message);
                 
-                // Show success message
                 frappe.show_alert({
                     message: `Found ${r.message.length} matching sales orders`,
                     indicator: 'green'
                 }, 3);
                 
             } else {
-                // No results found
                 const appliedFiltersArray = [];
                 
                 if (Object.keys(filters).length > 0) {
@@ -370,10 +367,8 @@ function applyFilters() {
                     </div>
                 `);
                 
-                // Update counts to show filtered results (will be zero)
                 updateCountsFromFilters(filters);
                 
-                // Show info message
                 frappe.show_alert({
                     message: 'No sales orders match your filter criteria',
                     indicator: 'orange'
@@ -381,7 +376,6 @@ function applyFilters() {
             }
         },
         error: function(err) {
-            // Remove loading state
             applyBtn.removeClass('filter-loading').prop('disabled', false);
             applyBtn.text('Apply Filters');
             
@@ -408,7 +402,6 @@ function applyFilters() {
                 </div>
             `);
             
-            // Show error message
             frappe.show_alert({
                 message: 'Error applying filters. Please try again.',
                 indicator: 'red'
@@ -436,9 +429,7 @@ function updateCountsFromFilters(filters) {
     });
 }
 
-// Clear all filters
 function clearFilters() {
-    // Clear all filter dropdowns
     $('#filter-company').val('');
     $('#filter-sales-order-type').val('');
     $('#filter-customer').val('');
@@ -447,10 +438,8 @@ function clearFilters() {
     $('#filter-date-to').val('');
     $('#filter-status').val('');
     
-    // Clear search box too
     $('#sales-order-search').val('');
     
-    // Show loading while clearing
     const resultDiv = $('#search-result');
     resultDiv.html(`
         <div style='text-align: center; padding: 20px; color: #666;'>
@@ -461,17 +450,15 @@ function clearFilters() {
         </div>
     `);
     
-    // Show feedback to user
     frappe.show_alert({
         message: 'All filters cleared successfully',
         indicator: 'blue'
     }, 3);
     
-    // Reload all sales orders and original counts
     setTimeout(() => {
         loadAllSalesOrders();
         loadOriginalCounts();
-    }, 500); // Small delay for better UX
+    }, 500); 
 }
 
 // Load original counts
@@ -493,7 +480,6 @@ function loadOriginalCounts() {
     });
 }
 
-// Update counts based on filtered results
 function updateFilteredCounts(salesOrders) {
     const total = salesOrders ? salesOrders.length : 0;
     
