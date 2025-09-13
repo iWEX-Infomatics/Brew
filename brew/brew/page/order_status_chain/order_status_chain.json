@@ -1,0 +1,18 @@
+{
+ "content": null,
+ "creation": "2025-09-13 10:38:05.183457",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2025-09-13 10:38:05.183457",
+ "modified_by": "Administrator",
+ "module": "Brew",
+ "name": "order_status_chain",
+ "owner": "Administrator",
+ "page_name": "order_status_chain",
+ "roles": [],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0
+}
