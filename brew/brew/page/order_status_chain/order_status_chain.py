@@ -50,6 +50,119 @@ def get_time_ago(creation_datetime):
         frappe.log_error(f"Error calculating time ago: {str(e)}")
         return "Unknown"
 
+def check_has_child_documents(sales_order_id):
+    """
+    Check if a sales order has any child documents created
+    Returns True if child documents exist, False otherwise
+    """
+    try:
+        # Get the sales order
+        sales_order = frappe.get_doc("Sales Order", sales_order_id)
+        
+        # Check for Purchase Orders from items.custom_purchase_order_no
+        po_names = [row.custom_purchase_order_no for row in sales_order.items if row.custom_purchase_order_no]
+        if po_names:
+            return True
+        
+        # Check for Stone Requests from custom_bom_items.custom_stone_request_id
+        if hasattr(sales_order, 'custom_bom_items') and sales_order.custom_bom_items:
+            stone_request_ids = [
+                row.custom_stone_request_id for row in sales_order.custom_bom_items 
+                if hasattr(row, 'custom_stone_request_id') and row.custom_stone_request_id
+            ]
+            if stone_request_ids:
+                return True
+        
+        return False
+        
+    except Exception as e:
+        frappe.log_error(f"Error checking child documents for {sales_order_id}: {str(e)}")
+        return None  # Unknown status
+
+@frappe.whitelist()
+def get_paginated_sales_orders_with_children_count(page=1, page_size=20):
+    """
+    Get paginated sales orders with child document status check
+    """
+    try:
+        page = int(page)
+        page_size = int(page_size)
+        
+        # Calculate offset
+        offset = (page - 1) * page_size
+        
+        # Get total count first
+        total_count = frappe.db.count('Sales Order')
+        
+        # Get paginated sales orders
+        sales_orders = frappe.get_all("Sales Order", 
+            filters={},
+            fields=[
+                "name", 
+                "customer", 
+                "status", 
+                "transaction_date", 
+                "delivery_date",
+                "custom_department",
+                "custom_main_stone",
+                "custom_sales_order_type",
+                "company",
+                "creation"
+            ],
+            order_by="creation desc",
+            limit_start=offset,
+            limit_page_length=page_size
+        )
+        
+        # For each sales order, get image, time ago, and child document status
+        for so in sales_orders:
+            # Calculate time ago
+            so.time_ago = get_time_ago(so.creation)
+            
+            # Get attached image
+            product_image = None
+            try:
+                attachments = frappe.get_all("File", 
+                    filters={
+                        "attached_to_doctype": "Sales Order",
+                        "attached_to_name": so.name,
+                        "is_folder": 0
+                    },
+                    fields=["file_url", "file_name"]
+                )
+                
+                # Get the first image attachment
+                for attachment in attachments:
+                    if attachment.file_name and attachment.file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
+                        product_image = attachment.file_url
+                        break
+            except Exception as img_error:
+                frappe.log_error(f"Image error for {so.name}: {str(img_error)}")
+                product_image = None
+            
+            so.custom_product_image = product_image
+            
+            # Check for child documents
+            so.has_child_documents = check_has_child_documents(so.name)
+        
+        return {
+            'sales_orders': sales_orders,
+            'total_count': total_count,
+            'current_page': page,
+            'page_size': page_size,
+            'total_pages': (total_count + page_size - 1) // page_size
+        }
+        
+    except Exception as e:
+        frappe.log_error(f"Error in get_paginated_sales_orders_with_children_count: {str(e)}")
+        return {
+            'sales_orders': [],
+            'total_count': 0,
+            'current_page': 1,
+            'page_size': page_size,
+            'total_pages': 0
+        }
+
 @frappe.whitelist()
 def get_sales_order_status_counts():
     # Include all sales orders
@@ -148,7 +261,7 @@ def get_filtered_sales_orders(filters):
             limit=20000
         )
         
-        # For each sales order, get the attached image and calculate time ago
+        # For each sales order, get the attached image, time ago, and child document status
         for so in sales_orders:
             # Calculate time ago
             so.time_ago = get_time_ago(so.creation)
@@ -175,6 +288,9 @@ def get_filtered_sales_orders(filters):
                 product_image = None
             
             so.custom_product_image = product_image
+            
+            # Check for child documents
+            so.has_child_documents = check_has_child_documents(so.name)
         
         return sales_orders
         
@@ -269,10 +385,10 @@ def get_filtered_sales_order_counts(filters):
 @frappe.whitelist()
 def get_all_sales_orders_summary():
     """
-    Fetch all sales orders with basic information for summary view
+    Fetch all sales orders with basic information for summary view (DEPRECATED - USE PAGINATION)
     """
     try:
-        # Get all sales orders
+        # Get all sales orders (limited to prevent performance issues)
         sales_orders = frappe.get_all("Sales Order", 
             filters={},
             fields=[
@@ -288,10 +404,10 @@ def get_all_sales_orders_summary():
                 "creation"
             ],
             order_by="creation desc",
-            limit=100000
+            limit=1000  # Limit to prevent performance issues
         )
         
-        # For each sales order, get the attached image and calculate time ago
+        # For each sales order, get the attached image, time ago, and child document status
         for so in sales_orders:
             # Calculate time ago
             so.time_ago = get_time_ago(so.creation)
@@ -318,6 +434,9 @@ def get_all_sales_orders_summary():
                 product_image = None
             
             so.custom_product_image = product_image
+            
+            # Check for child documents
+            so.has_child_documents = check_has_child_documents(so.name)
         
         return sales_orders
         
