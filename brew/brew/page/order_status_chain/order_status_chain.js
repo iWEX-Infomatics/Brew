@@ -704,11 +704,11 @@ frappe.pages['order_status_chain'].on_page_load = function (wrapper) {
         // Child document status - show directly without needing to click
         let childDocumentStatus = '';
         if (salesOrder.has_child_documents === true) {
-            childDocumentStatus = '<div style="font-size: 11px; color: #28a745; font-weight: 600; margin-top: 2px;    margin-right: 22px;"> Documents Created</div>';
+            childDocumentStatus = '<div style="font-size: 11px; color: #28a745; font-weight: 600; margin-top: 2px;    margin-right: 35px;"> Documents Created</div>';
         } else if (salesOrder.has_child_documents === false) {
-            childDocumentStatus = '<div style="font-size: 11px; color: #dc3545; font-weight: 600; margin-top: 2px;    margin-right: 22px;"> No Documents Created</div>';
+            childDocumentStatus = '<div style="font-size: 11px; color: #dc3545; font-weight: 600; margin-top: 2px;    margin-right: 35px;"> No Documents Created</div>';
         } else {
-            childDocumentStatus = '<div style="font-size: 11px; color: #6c757d; font-weight: 600; margin-top: 2px;    margin-right: 22px;"> Status Unknown</div>';
+            childDocumentStatus = '<div style="font-size: 11px; color: #6c757d; font-weight: 600; margin-top: 2px;    margin-right: 35px;"> Status Unknown</div>';
         }
 
         return `
