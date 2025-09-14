@@ -164,6 +164,137 @@ def get_paginated_sales_orders_with_children_count(page=1, page_size=20):
         }
 
 @frappe.whitelist()
+def get_filtered_sales_orders_paginated(filters, page=1, page_size=20):
+    """
+    Get filtered sales orders with pagination
+    """
+    try:
+        page = int(page)
+        page_size = int(page_size)
+        
+        # Parse filters if it's a JSON string
+        if isinstance(filters, str):
+            import json
+            try:
+                filters = json.loads(filters)
+            except:
+                pass
+        
+        # Build filter conditions
+        conditions = {}
+        
+        # Only add filters if they have values
+        if filters.get('company') and str(filters.get('company')).strip() != '':
+            conditions['company'] = filters['company']
+        
+        if filters.get('custom_sales_order_type') and str(filters.get('custom_sales_order_type')).strip() != '':
+            conditions['custom_sales_order_type'] = filters['custom_sales_order_type']
+        
+        if filters.get('customer') and str(filters.get('customer')).strip() != '':
+            conditions['customer'] = filters['customer']
+        
+        if filters.get('custom_department') and str(filters.get('custom_department')).strip() != '':
+            conditions['custom_department'] = filters['custom_department']
+        
+        if filters.get('status') and str(filters.get('status')).strip() != '':
+            conditions['status'] = filters['status']
+        
+        # Handle date filtering
+        if filters.get('transaction_date'):
+            date_filter = filters['transaction_date']
+            
+            # Handle different date formats
+            if isinstance(date_filter, list) and len(date_filter) >= 1:
+                # Remove empty strings from the list
+                date_filter = [d for d in date_filter if d and str(d).strip() != '']
+                
+                if len(date_filter) == 2:
+                    # Date range
+                    conditions['transaction_date'] = ['between', date_filter]
+                elif len(date_filter) == 1:
+                    # Single date
+                    conditions['transaction_date'] = date_filter[0]
+            elif isinstance(date_filter, str) and date_filter.strip() != '':
+                # Single date as string
+                conditions['transaction_date'] = date_filter.strip()
+        
+        # Calculate offset
+        offset = (page - 1) * page_size
+        
+        # Get total count first
+        total_count = frappe.db.count('Sales Order', conditions)
+        
+        # Get paginated filtered sales orders
+        sales_orders = frappe.get_all("Sales Order", 
+            filters=conditions,
+            fields=[
+                "name", 
+                "customer", 
+                "status", 
+                "transaction_date", 
+                "delivery_date",
+                "custom_department",
+                "custom_main_stone",
+                "custom_sales_order_type",
+                "company",
+                "creation"
+            ],
+            order_by="creation desc",
+            limit_start=offset,
+            limit_page_length=page_size
+        )
+        
+        # For each sales order, get the attached image, time ago, and child document status
+        for so in sales_orders:
+            # Calculate time ago
+            so.time_ago = get_time_ago(so.creation)
+            
+            # Get attached image
+            product_image = None
+            try:
+                attachments = frappe.get_all("File", 
+                    filters={
+                        "attached_to_doctype": "Sales Order",
+                        "attached_to_name": so.name,
+                        "is_folder": 0
+                    },
+                    fields=["file_url", "file_name"]
+                )
+                
+                # Get the first image attachment
+                for attachment in attachments:
+                    if attachment.file_name and attachment.file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
+                        product_image = attachment.file_url
+                        break
+            except Exception as img_error:
+                frappe.log_error(f"Image error for {so.name}: {str(img_error)}")
+                product_image = None
+            
+            so.custom_product_image = product_image
+            
+            # Check for child documents
+            so.has_child_documents = check_has_child_documents(so.name)
+        
+        return {
+            'sales_orders': sales_orders,
+            'total_count': total_count,
+            'current_page': page,
+            'page_size': page_size,
+            'total_pages': (total_count + page_size - 1) // page_size
+        }
+        
+    except Exception as e:
+        frappe.log_error(f"Error in get_filtered_sales_orders_paginated: {str(e)}")
+        return {
+            'sales_orders': [],
+            'total_count': 0,
+            'current_page': 1,
+            'page_size': page_size,
+            'total_pages': 0
+        }
+
+
+@frappe.whitelist()
 def get_sales_order_status_counts():
     # Include all sales orders
     base_filters = {}
