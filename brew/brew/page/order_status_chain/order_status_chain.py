@@ -95,7 +95,8 @@ def get_paginated_sales_orders_with_children_count(page=1, page_size=20):
         total_count = frappe.db.count('Sales Order')
         
         # Get paginated sales orders
-        sales_orders = frappe.get_all("Sales Order", 
+        sales_orders = frappe.get_all(
+            "Sales Order", 
             filters={},
             fields=[
                 "name", 
@@ -116,16 +117,17 @@ def get_paginated_sales_orders_with_children_count(page=1, page_size=20):
         
         # For each sales order, get image, time ago, and child document status
         for so in sales_orders:
-            # Calculate time ago
-            so.time_ago = get_time_ago(so.creation)
+            # Time ago (assumes get_time_ago is defined elsewhere)
+            so["time_ago"] = get_time_ago(so["creation"])
             
             # Get attached image
             product_image = None
             try:
-                attachments = frappe.get_all("File", 
+                attachments = frappe.get_all(
+                    "File", 
                     filters={
                         "attached_to_doctype": "Sales Order",
-                        "attached_to_name": so.name,
+                        "attached_to_name": so["name"],
                         "is_folder": 0
                     },
                     fields=["file_url", "file_name"]
@@ -133,17 +135,19 @@ def get_paginated_sales_orders_with_children_count(page=1, page_size=20):
                 
                 # Get the first image attachment
                 for attachment in attachments:
-                    if attachment.file_name and attachment.file_name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')):
-                        product_image = attachment.file_url
+                    if attachment.get("file_name") and attachment["file_name"].lower().endswith(
+                        ('.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp')
+                    ):
+                        product_image = attachment["file_url"]
                         break
             except Exception as img_error:
-                frappe.log_error(f"Image error for {so.name}: {str(img_error)}")
+                frappe.log_error(f"Image error for {so['name']}: {str(img_error)}")
                 product_image = None
             
-            so.custom_product_image = product_image
+            so["custom_product_image"] = product_image
             
-            # Check for child documents
-            so.has_child_documents = check_has_child_documents(so.name)
+            # Check for child documents (assumes check_has_child_documents is defined)
+            so["has_child_documents"] = check_has_child_documents(so["name"])
         
         return {
             'sales_orders': sales_orders,
@@ -162,6 +166,7 @@ def get_paginated_sales_orders_with_children_count(page=1, page_size=20):
             'page_size': page_size,
             'total_pages': 0
         }
+
 
 @frappe.whitelist()
 def get_filtered_sales_orders_paginated(filters, page=1, page_size=20):
