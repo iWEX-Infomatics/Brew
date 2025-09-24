@@ -1,3 +1,25 @@
 #navbar-breadcrumbs li.disabled a{
     color: black !important;
 }
+
+.btn-purple {
+  background-color: #8e44ad;
+  color: white;
+}
+
+.btn-lime {
+  background-color: #cddc39;
+  color: black;
+}
+.btn-purple {
+    background-color: #6f42c1; /* Example purple hex code */
+    border-color: #6f42c1;
+    color: #fff; /* Text color for contrast */
+}
+.btn, div#driver-popover-item .driver-popover-footer button, div#driver-popover-item .driver-popover-footer button.driver-next-btn, div#driver-popover-item .driver-popover-footer button.driver-prev-btn, div#driver-popover-item .driver-popover-footer button.driver-close-btn, div#driver-popover-item .driver-popover-footer button.driver-disabled{
+    font-size: 12px !important;
+}
+
+.page-title .title-area .title-text{
+    font-size:34px !important ;
+}
