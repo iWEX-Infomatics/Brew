@@ -1,4 +1,4 @@
-frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
+frappe.pages['bbj-delivery-status'].on_page_load = function (wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
         title: "BBJ Delivery Status (Bulk)",
@@ -8,7 +8,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
     let container = $('<div class="bbj-container mt-3"></div>').appendTo(page.main);
 
     // Scrollable wrapper
-    let scrollContainer = $(`<div style="overflow-x:auto; white-space:nowrap;"></div>`).appendTo(container);
+    let scrollContainer = $(`<div style="overflow-x: auto; white-space: nowrap;"></div>`).appendTo(container);
 
     // Table
     let table = $(`<table class="table table-bordered table-striped" style="min-width: 1800px;">
@@ -40,19 +40,26 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
 
     let start = 0;
     let page_length = 50;
+    let seen_sales_orders = new Set();   // Track already added SOs
 
     function load_orders() {
         frappe.call({
             method: "brew.brew.page.bbj_delivery_status.bbj_delivery_status.get_bbj_sales_orders",
             args: { start, page_length },
-            callback: function(r) {
+            callback: function (r) {
                 if (r.message && r.message.length) {
                     r.message.forEach(d => {
+                        // Skip duplicate Sales Orders
+                        if (seen_sales_orders.has(d.sales_order)) {
+                            return;
+                        }
+                        seen_sales_orders.add(d.sales_order);
+
                         let img_html = d.picture
                             ? `<img src="${d.picture}" style="height:40px;">`
                             : "";
 
-                        // Sales Order clickable link
+                        // Clickable Sales Order link
                         let so_link = d.sales_order
                             ? `<a href="/app/sales-order/${d.sales_order}" target="_blank">${d.sales_order}</a>`
                             : "";
@@ -62,7 +69,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
                             <td>${d.customer_po || ""}</td>
                             <td>${d.customer_sku || ""}</td>
                             <td>${img_html}</td>
-                            <td>${d.order_qty || 0}</td>
+                            <td>${d.total_qty || 0}</td>
                             <td>${d.unit_price || 0}</td>
                             <td>${d.extended_cost || 0}</td>
                             <td>${d.product_type || ""}</td>
