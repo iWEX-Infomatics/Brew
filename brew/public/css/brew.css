@@ -22,4 +22,5 @@
 
 .page-title .title-area .title-text{
     font-size:34px !important ;
+    max-width: 100% !important;
 }
