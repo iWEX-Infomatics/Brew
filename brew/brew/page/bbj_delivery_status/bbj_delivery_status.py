@@ -3,39 +3,96 @@ from frappe.utils import get_url
 
 @frappe.whitelist()
 def get_bbj_sales_orders(start=0, page_length=50):
-    """BBJ Bangkok Ltd के Sales Orders return करेगा, pagination support + parent.total_qty के साथ"""
+    """Return BBJ Bangkok Ltd sales order items with all required fields (pagination supported)"""
     start = int(start)
     page_length = int(page_length)
 
-    orders = frappe.get_all(
-        "Sales Order",
-        filters={"company": "BBJ Bangkok Ltd"},
-        fields=[
-            "name",
-            "custom_customer_sku",
-            "custom_vendor_product_id",
-            "delivery_date",
-            "custom_sales_order_type",
-            "custom_main_stone",
-            "total_qty"
-        ],
-        start=start,
-        page_length=page_length,
-        order_by="creation desc"
-    )
+    items = frappe.db.sql("""
+        SELECT
+            so.name AS sales_order,
+            so.po_no AS customer_po,
+            soi.custom_customer_sku AS customer_sku,
+            soi.qty AS order_qty,
+            soi.rate AS unit_price,
+            (soi.qty * soi.rate) AS extended_cost,
+            soi.item_group AS product_type,
+            so.custom_main_stone AS gemstone,   -- parent field
+            so.delivery_date AS eta,
+            soi.custom_vendor_product_id AS vendor_product_id,
+            so.total_qty,
+            soi.name AS so_item_name
+        FROM `tabSales Order` so
+        JOIN `tabSales Order Item` soi ON soi.parent = so.name
+        WHERE so.company = 'BBJ Bangkok Ltd'
+        ORDER BY so.creation DESC
+        LIMIT %s, %s
+    """, (start, page_length), as_dict=True)
 
-    for o in orders:
-        # Sales Order की पहली attachment (image)
+    for row in items:
+        # Picture (attachment from Sales Order Item, fallback to Sales Order)
         file = frappe.get_all(
             "File",
             filters={
-                "attached_to_doctype": "Sales Order",
-                "attached_to_name": o["name"]
+                "attached_to_doctype": "Sales Order Item",
+                "attached_to_name": row["so_item_name"]
             },
             fields=["file_url"],
             order_by="creation asc",
             limit=1
         )
-        o["custom_product_image"] = get_url(file[0].file_url) if file else None
+        if not file:
+            file = frappe.get_all(
+                "File",
+                filters={
+                    "attached_to_doctype": "Sales Order",
+                    "attached_to_name": row["sales_order"]
+                },
+                fields=["file_url"],
+                order_by="creation asc",
+                limit=1
+            )
+        row["picture"] = get_url(file[0].file_url) if file else None
 
-    return orders
+        # Export Invoice (first invoice for this SO item)
+        inv = frappe.db.sql("""
+            SELECT sii.parent AS invoice_no, si.posting_date AS invoice_date
+            FROM `tabSales Invoice Item` sii
+            JOIN `tabSales Invoice` si ON si.name = sii.parent
+            WHERE sii.sales_order = %s AND sii.so_detail = %s
+            ORDER BY si.posting_date ASC
+            LIMIT 1
+        """, (row["sales_order"], row["so_item_name"]), as_dict=True)
+
+        if inv:
+            row["export_invoice_no"] = inv[0].invoice_no
+            row["invoice_date"] = inv[0].invoice_date
+        else:
+            row["export_invoice_no"] = ""
+            row["invoice_date"] = ""
+
+        # Latest Shipping On = latest sales invoice date
+        latest_inv = frappe.db.sql("""
+            SELECT MAX(si.posting_date) AS latest_date
+            FROM `tabSales Invoice Item` sii
+            JOIN `tabSales Invoice` si ON si.name = sii.parent
+            WHERE sii.sales_order = %s AND sii.so_detail = %s
+        """, (row["sales_order"], row["so_item_name"]), as_dict=True)
+
+        row["latest_shipping_on"] = latest_inv[0].latest_date if latest_inv and latest_inv[0].latest_date else ""
+
+        # Shipped Qty
+        shipped = frappe.db.sql("""
+            SELECT SUM(dni.qty)
+            FROM `tabDelivery Note Item` dni
+            JOIN `tabDelivery Note` dn ON dn.name = dni.parent
+            WHERE dni.against_sales_order = %s
+              AND dni.so_detail = %s
+              AND dn.docstatus = 1
+        """, (row["sales_order"], row["so_item_name"]))
+
+        row["shipped_qty"] = shipped[0][0] or 0
+
+        # HAWB (Not used)
+        row["hawb"] = ""
+
+    return items

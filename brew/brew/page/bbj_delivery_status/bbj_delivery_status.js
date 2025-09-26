@@ -7,22 +7,30 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
 
     let container = $('<div class="bbj-container mt-3"></div>').appendTo(page.main);
 
+    // Table
     let table = $(`<table class="table table-bordered table-striped">
         <thead>
             <tr>
-                <th>Sales Order</th>
-                <th>Customer SKU</th>
-                <th>Product Image</th>
-                <th>Vendor Product ID</th>
-                <th>Delivery Date</th>
-                <th>Sales Order Type</th>
-                <th>Main Stone</th>
-                <th>Total Qty</th>
+                <th>PO (Customer PO)</th>
+                <th>SKU (Customer SKU)</th>
+                <th>Picture</th>
+                <th>Order Qty</th>
+                <th>Unit Price</th>
+                <th>Extended Cost</th>
+                <th>Product Type</th>
+                <th>Gemstone</th>
+                <th>ETA (Delivery Date)</th>
+                <th>Latest Shipping On</th>
+                <th>Export Invoice No. (SKU Sales Invoice ID)</th>
+                <th>HAWB</th>
+                <th>Shipped Qty</th>
+                <th>Invoice Date (SKU Sales Invoice Date)</th>
             </tr>
         </thead>
         <tbody></tbody>
     </table>`).appendTo(container);
 
+    // Load More button
     let load_more_btn = $('<button class="btn btn-primary mt-3">Load More</button>')
         .appendTo(container);
 
@@ -36,19 +44,25 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
             callback: function(r) {
                 if (r.message && r.message.length) {
                     r.message.forEach(d => {
-                        let img_html = d.custom_product_image
-                            ? `<img src="${d.custom_product_image}" style="height:40px;">`
+                        let img_html = d.picture
+                            ? `<img src="${d.picture}" style="height:40px;">`
                             : "";
 
                         let row = `<tr>
-                            <td>${d.name}</td>
-                            <td>${d.custom_customer_sku || ""}</td>
+                            <td>${d.customer_po || ""}</td>
+                            <td>${d.customer_sku || ""}</td>
                             <td>${img_html}</td>
-                            <td>${d.custom_vendor_product_id || ""}</td>
-                            <td>${d.delivery_date || ""}</td>
-                            <td>${d.custom_sales_order_type || ""}</td>
-                            <td>${d.custom_main_stone || ""}</td>
-                            <td>${d.total_qty || 0}</td>
+                            <td>${d.order_qty || 0}</td>
+                            <td>${d.unit_price || 0}</td>
+                            <td>${d.extended_cost || 0}</td>
+                            <td>${d.product_type || ""}</td>
+                            <td>${d.gemstone || ""}</td>
+                            <td>${d.eta || ""}</td>
+                            <td>${d.latest_shipping_on || ""}</td>
+                            <td>${d.export_invoice_no || ""}</td>
+                            <td>${d.hawb || ""}</td>
+                            <td>${d.shipped_qty || 0}</td>
+                            <td>${d.invoice_date || ""}</td>
                         </tr>`;
                         table.find("tbody").append(row);
                     });
@@ -61,7 +75,9 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
         });
     }
 
+    // First load
     load_orders();
 
+    // Load More
     load_more_btn.click(() => load_orders());
 };
