@@ -7,10 +7,14 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
 
     let container = $('<div class="bbj-container mt-3"></div>').appendTo(page.main);
 
+    // Scrollable wrapper
+    let scrollContainer = $(`<div style="overflow-x:auto; white-space:nowrap;"></div>`).appendTo(container);
+
     // Table
-    let table = $(`<table class="table table-bordered table-striped">
+    let table = $(`<table class="table table-bordered table-striped" style="min-width: 1800px;">
         <thead>
             <tr>
+                <th>Sales Order</th>
                 <th>PO (Customer PO)</th>
                 <th>SKU (Customer SKU)</th>
                 <th>Picture</th>
@@ -28,7 +32,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
             </tr>
         </thead>
         <tbody></tbody>
-    </table>`).appendTo(container);
+    </table>`).appendTo(scrollContainer);
 
     // Load More button
     let load_more_btn = $('<button class="btn btn-primary mt-3">Load More</button>')
@@ -48,7 +52,13 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
                             ? `<img src="${d.picture}" style="height:40px;">`
                             : "";
 
+                        // Sales Order clickable link
+                        let so_link = d.sales_order
+                            ? `<a href="/app/sales-order/${d.sales_order}" target="_blank">${d.sales_order}</a>`
+                            : "";
+
                         let row = `<tr>
+                            <td>${so_link}</td>
                             <td>${d.customer_po || ""}</td>
                             <td>${d.customer_sku || ""}</td>
                             <td>${img_html}</td>

@@ -9,14 +9,14 @@ def get_bbj_sales_orders(start=0, page_length=50):
 
     items = frappe.db.sql("""
         SELECT
-            so.name AS sales_order,
-            so.po_no AS customer_po,
+            so.name AS sales_order,              -- Sales Order
+            so.po_no AS customer_po,             -- Customer PO
             soi.custom_customer_sku AS customer_sku,
             soi.qty AS order_qty,
             soi.rate AS unit_price,
             (soi.qty * soi.rate) AS extended_cost,
             soi.item_group AS product_type,
-            so.custom_main_stone AS gemstone,   -- parent field
+            so.custom_main_stone AS gemstone,    -- parent field
             so.delivery_date AS eta,
             soi.custom_vendor_product_id AS vendor_product_id,
             so.total_qty,
