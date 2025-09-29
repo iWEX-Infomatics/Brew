@@ -243,6 +243,7 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
             .zoom-img {
                 transition: transform 0.3s ease-in-out;
                 cursor: zoom-in;
+				
             }
             .zoom-img:hover {
                 transform: scale(3);
@@ -251,6 +252,7 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
                 z-index: 9999;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2);
                 background: #fff;
+				border:1px solid #12008675;
             }
         `).appendTo("head");
 };

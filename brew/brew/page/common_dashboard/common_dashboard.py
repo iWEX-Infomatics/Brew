@@ -52,7 +52,8 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
             soi.custom_vendor_product_id AS vendor_product_id,
             so.total_qty,
             so.company,
-            soi.name AS so_item_name
+            soi.name AS so_item_name,
+            so.custom_image_product
         FROM `tabSales Order` so
         JOIN `tabSales Order Item` soi ON soi.parent = so.name
         WHERE so.docstatus IN (0, 1) {condition_sql}
@@ -65,19 +66,47 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
     for row in items:
         row["brand"] = ""
 
-        # Picture
+        # Picture Logic - First check attachments for images, then custom_image_product field
+        picture_url = None
+        
+        # First try to get image from Sales Order Item attachments
         file = frappe.get_all(
             "File",
-            filters={"attached_to_doctype": "Sales Order Item", "attached_to_name": row["so_item_name"]},
-            fields=["file_url"], order_by="creation asc", limit=1
+            filters={
+                "attached_to_doctype": "Sales Order Item", 
+                "attached_to_name": row["so_item_name"],
+                "is_folder": 0
+            },
+            fields=["file_url", "file_name"], 
+            order_by="creation asc"
         )
+        
+        # If no files in Sales Order Item, check Sales Order attachments
         if not file:
             file = frappe.get_all(
                 "File",
-                filters={"attached_to_doctype": "Sales Order", "attached_to_name": row["sales_order"]},
-                fields=["file_url"], order_by="creation asc", limit=1
+                filters={
+                    "attached_to_doctype": "Sales Order", 
+                    "attached_to_name": row["sales_order"],
+                    "is_folder": 0
+                },
+                fields=["file_url", "file_name"], 
+                order_by="creation asc"
             )
-        row["picture"] = get_url(file[0].file_url) if file else None
+        
+        # Check if any attachment is an image
+        if file:
+            for f in file:
+                file_name = f.get("file_name", "").lower()
+                if any(ext in file_name for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']):
+                    picture_url = get_url(f.file_url)
+                    break
+        
+        # If no image found in attachments, use custom_image_product field
+        if not picture_url and row.get("custom_image_product"):
+            picture_url = get_url(row["custom_image_product"])
+        
+        row["picture"] = picture_url
 
         # Invoice info
         inv = frappe.db.sql("""
@@ -144,4 +173,3 @@ def get_so_bom_details(sales_order):
             })
 
     return result
-
