@@ -1,7 +1,7 @@
 frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
-        title: "Delivery Status",
+        title: "Common Dashboard",
         single_column: true
     });
 
@@ -29,7 +29,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
 
     let company_filter     = add_filter("company", "Company", "Link", "Company", "180px");
     let gemstone_filter    = add_filter("gemstone", "Gemstone", "Link", "Item Attribute Value", "180px");
-    let metal_group_filter = add_filter("metal_group", "Metal Group", "Link", "Item Attribute Value", "180px");
+    let metal_group_filter = add_filter("metal_group", "Metal Group", "Data", "180px");
     let customer_filter    = add_filter("customer", "Customer", "Link", "Customer", "180px");
     let department_filter  = add_filter("department", "Department", "Link", "Department", "180px");
     let date_filter        = add_filter("date", "Date", "Date", null, "160px");
@@ -43,15 +43,15 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
         </button>
     `).appendTo(btn_area);
 
-    let container = $(`<div class="bbj-container mt-3" style="overflow-x: auto;"></div>`).appendTo(page.main);
+    let container = $(`<div class="bbj-container" style="overflow-x: auto;"></div>`).appendTo(page.main);
 
     let table = $(`
-        <table class="table table-bordered table-striped" style="min-width: 3000px;">
+        <table class="table table-bordered table-striped" style="min-width: 3000px;margin-top:0px !important;">
             <thead>
                 <tr>
                     <th></th> <!-- expand button -->
-                    <th>Sales Order</th>
                     <th>Picture</th>
+                    <th>Sales Order</th>
                     <th>Company</th>
                     <th>PO (Customer PO)</th>
                     <th>SKU (Customer SKU)</th>
@@ -71,8 +71,8 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
                 </tr>
                 <tr class="filters-row-inputs">
                     <th></th>
-                    <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                     <th></th>
+                    <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                     <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                     <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                     <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
@@ -129,16 +129,15 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
                     r.message.forEach(d => {
                         if (loaded_sales_orders.has(d.sales_order)) return;
                         loaded_sales_orders.add(d.sales_order);
-
                         let img_html = d.picture
-                            ? `<img src="${d.picture}" class="zoom-img" style="height:40px;">`
-                            : "";
+                                                    ? `<img src="${d.picture}" class="zoom-img" style="height:40px;">`
+                                                    : `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/330px-No-Image-Placeholder.svg.png" class="zoom-img" style="height:40px;">`;
 
                         let row = $(`
                             <tr data-so="${d.sales_order}">
-                                <td><button class="btn btn-sm btn-outline-secondary expand-btn">+</button></td>
+                            <td><button class="btn btn-sm btn-outline-secondary expand-btn">+</button></td>
+                            <td>${img_html}</td>
                                 <td><a href="/app/sales-order/${d.sales_order}" target="_blank">${d.sales_order}</a></td>
-                                <td>${img_html}</td>
                                 <td>${d.company || ""}</td>
                                 <td>${d.customer_po || ""}</td>
                                 <td>${d.customer_sku || ""}</td>
@@ -246,7 +245,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
             }
             .zoom-img:hover {
                 transform: scale(3);
-                width:40px;
+                width:50px;
                 position: relative;
                 z-index: 9999;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2);

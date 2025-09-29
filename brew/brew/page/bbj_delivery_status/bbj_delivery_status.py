@@ -55,7 +55,7 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
             soi.name AS so_item_name
         FROM `tabSales Order` so
         JOIN `tabSales Order Item` soi ON soi.parent = so.name
-        WHERE so.docstatus = 1 {condition_sql}
+        WHERE so.docstatus IN (0, 1) {condition_sql}
         ORDER BY so.creation DESC
         LIMIT %s, %s
     """
