@@ -28,7 +28,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
     }
 
     let company_filter     = add_filter("company", "Company", "Link", "Company", "180px");
-    let gemstone_filter    = add_filter("gemstone", "Gemstone", "Link", "Item Attribute Value", "180px");
+    let gemstone_filter    = add_filter("gemstone", "Gemstone", "Link", "Gemstones", "180px");
     let metal_group_filter = add_filter("metal_group", "Metal Group", "Data", "180px");
     let customer_filter    = add_filter("customer", "Customer", "Link", "Customer", "180px");
     let department_filter  = add_filter("department", "Department", "Link", "Department", "180px");
