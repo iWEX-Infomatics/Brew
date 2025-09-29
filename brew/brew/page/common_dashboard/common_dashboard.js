@@ -1,11 +1,12 @@
-frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
+frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
         title: "Common Dashboard",
         single_column: true
     });
 
-    let filter_area = $('<div class="filters-row d-flex flex-nowrap align-items-center mb-3" ></div>').appendTo(page.main);
+    let filter_area = $('<div class="filters-row d-flex flex-nowrap align-items-center mb-3" style="position: sticky; top: 46px; background: white; z-index: 1000; padding: 10px 0;" ></div>').appendTo(page.main);
+
 
     function add_filter(fieldname, label, fieldtype, options=null, width="140px") {
         let field = frappe.ui.form.make_control({
@@ -122,7 +123,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
         }
 
         frappe.call({
-            method: "brew.brew.page.bbj_delivery_status.bbj_delivery_status.get_bbj_sales_orders",
+            method: "brew.brew.page.common_dashboard.common_dashboard.get_bbj_sales_orders",
             args: Object.assign({ start, page_length }, get_filters()),
             callback: function(r) {
                 if (r.message && r.message.length) {
@@ -174,7 +175,7 @@ frappe.pages['bbj-delivery-status'].on_page_load = function(wrapper) {
 
         if (btn.text() === "+") {
             frappe.call({
-                method: "brew.brew.page.bbj_delivery_status.bbj_delivery_status.get_so_bom_details",
+                method: "brew.brew.page.common_dashboard.common_dashboard.get_so_bom_details",
                 args: { sales_order: so },
                 callback: function(r) {
                     if (r.message) {

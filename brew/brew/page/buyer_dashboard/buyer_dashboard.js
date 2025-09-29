@@ -15,7 +15,7 @@ frappe.pages['buyer-dashboard'].on_page_load = function(wrapper) {
 	$('<button class="btn btn-purple btn-sm mr-2 mb-2">BBJ Delivery Status (Bulk)</button>')
 		.appendTo(bbj_section)
 		.click(function() {
-			frappe.set_route("bbj-delivery-status");
+			frappe.set_route("common-dashboard");
 		});
 
 	$('<button class="btn btn-purple btn-sm mr-2 mb-2">BBJ - Delivery Status Update Report (QA)</button>')
