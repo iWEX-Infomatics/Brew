@@ -1,12 +1,11 @@
-frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
+frappe.pages['jtv-buyer-dashboard'].on_page_load = function(wrapper) {
     var page = frappe.ui.make_app_page({
         parent: wrapper,
-        title: "Common Dashboard",
+        title: "JTV Buyer's Dashboard",
         single_column: true
     });
 
     let filter_area = $('<div class="filters-row d-flex flex-nowrap align-items-center mb-3" style="position: sticky; top: 46px; background: white; z-index: 1000; padding: 10px 0;" ></div>').appendTo(page.main);
-
 
     function add_filter(fieldname, label, fieldtype, options=null, width="140px") {
         let field = frappe.ui.form.make_control({
@@ -31,8 +30,7 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
     let company_filter     = add_filter("company", "Company", "Link", "Company", "180px");
     let gemstone_filter    = add_filter("gemstone", "Gemstone", "Link", "Gemstones", "180px");
     let metal_group_filter = add_filter("metal_group", "Metal Group", "Data", "180px");
-    let customer_filter    = add_filter("customer", "Customer", "Link", "Customer", "180px");
-    let department_filter  = add_filter("department", "Department", "Link", "Department", "180px");
+    let department_filter  = add_filter("department", "Department", "Link", "Customer Departments", "180px");
     let date_filter        = add_filter("date", "Date", "Date", null, "160px");
     let sku_filter         = add_filter("customer_sku", "Customer SKU", "Data", null, "180px");
 
@@ -52,10 +50,10 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
                 <tr>
                     <th></th> <!-- expand button -->
                     <th>Picture</th>
-                    <th>Sales Order</th>
+                    <th>Order</th>
                     <th>Company</th>
-                    <th>PO (Customer PO)</th>
-                    <th>SKU (Customer SKU)</th>
+                    <th>PO</th>
+                    <th>SKU</th>
                     <th>Order Qty</th>
                     <th>Unit Price</th>
                     <th>Extended Cost</th>
@@ -89,7 +87,6 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
                     <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                     <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                     <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
-                    <th><input type="text" class="form-control form-control-sm" placeholder="Search"></th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -107,7 +104,6 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
             company: company_filter.get_value(),
             gemstone: gemstone_filter.get_value(),
             metal_group: metal_group_filter.get_value(),
-            customer: customer_filter.get_value(),
             department: department_filter.get_value(),
             date: date_filter.get_value(),
             customer_sku: sku_filter.get_value()
@@ -123,7 +119,7 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
         }
 
         frappe.call({
-            method: "brew.brew.page.common_dashboard.common_dashboard.get_bbj_sales_orders",
+            method: "brew.brew.page.jtv_buyer_dashboard.jtv_buyer_dashboard.get_bbj_sales_orders",
             args: Object.assign({ start, page_length }, get_filters()),
             callback: function(r) {
                 if (r.message && r.message.length) {
@@ -131,8 +127,8 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
                         if (loaded_sales_orders.has(d.sales_order)) return;
                         loaded_sales_orders.add(d.sales_order);
                         let img_html = d.picture
-                                                    ? `<img src="${d.picture}" class="zoom-img" style="height:40px;">`
-                                                    : `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/330px-No-Image-Placeholder.svg.png" class="zoom-img" style="height:40px;">`;
+                            ? `<img src="${d.picture}" class="zoom-img" style="height:40px;">`
+                            : `<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/330px-No-Image-Placeholder.svg.png" class="zoom-img" style="height:40px;">`;
 
                         let row = $(`
                             <tr data-so="${d.sales_order}">
@@ -175,7 +171,7 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
 
         if (btn.text() === "+") {
             frappe.call({
-                method: "brew.brew.page.common_dashboard.common_dashboard.get_so_bom_details",
+                method: "brew.brew.page.jtv_buyer_dashboard.jtv_buyer_dashboard.get_so_bom_details",
                 args: { sales_order: so },
                 callback: function(r) {
                     if (r.message) {
@@ -220,11 +216,9 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
     load_orders();
 
     load_more_btn.click(() => load_orders());
-
     apply_btn.click(() => load_orders(true));
-
     reset_btn.click(() => {
-        [company_filter, gemstone_filter, metal_group_filter, customer_filter, department_filter, date_filter, sku_filter].forEach(f => f.set_value(""));
+        [company_filter, gemstone_filter, metal_group_filter, department_filter, date_filter, sku_filter].forEach(f => f.set_value(""));
         load_orders(true);
     });
 
@@ -243,7 +237,6 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
             .zoom-img {
                 transition: transform 0.3s ease-in-out;
                 cursor: zoom-in;
-				
             }
             .zoom-img:hover {
                 transform: scale(3);
@@ -252,7 +245,7 @@ frappe.pages['common-dashboard'].on_page_load = function(wrapper) {
                 z-index: 9999;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.2);
                 background: #fff;
-				border:1px solid #12008675;
+                border:1px solid #12008675;
             }
         `).appendTo("head");
 };

@@ -1,18 +1,19 @@
 {
  "content": null,
- "creation": "2025-09-29 13:36:28.503845",
+ "creation": "2025-09-30 11:08:20.509720",
  "docstatus": 0,
  "doctype": "Page",
  "idx": 0,
- "modified": "2025-09-29 13:36:28.503845",
+ "modified": "2025-09-30 11:14:26.096248",
  "modified_by": "Administrator",
  "module": "Brew",
- "name": "common-dashboard",
+ "name": "jtv-buyer-dashboard",
  "owner": "Administrator",
- "page_name": "common-dashboard",
+ "page_name": "jtv-buyer-dashboard",
  "roles": [],
  "script": null,
  "standard": "Yes",
  "style": null,
- "system_page": 0
+ "system_page": 0,
+ "title": "JTV Buyer's Dashboard"
 }

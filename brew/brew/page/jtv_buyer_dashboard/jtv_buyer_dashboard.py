@@ -3,37 +3,34 @@ from frappe.utils import get_url
 
 @frappe.whitelist()
 def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
-                         metal_group=None, customer=None, department=None,
-                         date=None, customer_sku=None):
-    """Return sales order items with filters + pagination"""
+                         metal_group=None, department=None,
+                         date=None, customer_sku=None):   # ← customer hata diya
 
     start = int(start)
     page_length = int(page_length)
 
-    conditions = []
-    values = [start, page_length]
+    # 🔹 Default JTV filter
+    conditions = ["so.customer = %s"]
+    values = ["JTV", start, page_length]
 
     if company:
         conditions.append("so.company = %s")
-        values.insert(0, company)
+        values.insert(1, company)
     if gemstone:
         conditions.append("so.custom_main_stone = %s")
-        values.insert(0, gemstone)
+        values.insert(1, gemstone)
     if metal_group:
         conditions.append("so.custom_metal_group = %s")
-        values.insert(0, metal_group)
-    if customer:
-        conditions.append("so.customer = %s")
-        values.insert(0, customer)
+        values.insert(1, metal_group)
     if department:
         conditions.append("so.department = %s")
-        values.insert(0, department)
+        values.insert(1, department)
     if date:
         conditions.append("DATE(so.transaction_date) = %s")
-        values.insert(0, date)
+        values.insert(1, date)
     if customer_sku:
         conditions.append("soi.custom_customer_sku = %s")
-        values.insert(0, customer_sku)
+        values.insert(1, customer_sku)
 
     condition_sql = " AND " + " AND ".join(conditions) if conditions else ""
 
@@ -66,10 +63,8 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
     for row in items:
         row["brand"] = ""
 
-        # Picture Logic - First check attachments for images, then custom_image_product field
+        # 🔹 Picture Logic
         picture_url = None
-        
-        # First try to get image from Sales Order Item attachments
         file = frappe.get_all(
             "File",
             filters={
@@ -80,8 +75,6 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
             fields=["file_url", "file_name"], 
             order_by="creation asc"
         )
-        
-        # If no files in Sales Order Item, check Sales Order attachments
         if not file:
             file = frappe.get_all(
                 "File",
@@ -93,22 +86,17 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
                 fields=["file_url", "file_name"], 
                 order_by="creation asc"
             )
-        
-        # Check if any attachment is an image
         if file:
             for f in file:
                 file_name = f.get("file_name", "").lower()
                 if any(ext in file_name for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']):
                     picture_url = get_url(f.file_url)
                     break
-        
-        # If no image found in attachments, use custom_image_product field
         if not picture_url and row.get("custom_image_product"):
             picture_url = get_url(row["custom_image_product"])
-        
         row["picture"] = picture_url
 
-        # Invoice info
+        # 🔹 Invoice Info
         inv = frappe.db.sql("""
             SELECT sii.parent AS invoice_no, si.posting_date AS invoice_date
             FROM `tabSales Invoice Item` sii
@@ -124,7 +112,7 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
             row["export_invoice_no"] = ""
             row["invoice_date"] = ""
 
-        # Latest Shipping
+        # 🔹 Latest Shipping
         latest_inv = frappe.db.sql("""
             SELECT MAX(si.posting_date) AS latest_date
             FROM `tabSales Invoice Item` sii
@@ -133,7 +121,7 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
         """, (row["sales_order"], row["so_item_name"]), as_dict=True)
         row["latest_shipping_on"] = latest_inv[0].latest_date if latest_inv and latest_inv[0].latest_date else ""
 
-        # Shipped Qty
+        # 🔹 Shipped Qty
         shipped = frappe.db.sql("""
             SELECT SUM(dni.qty)
             FROM `tabDelivery Note Item` dni
@@ -160,7 +148,6 @@ def get_so_bom_details(sales_order):
         bom_doc = frappe.get_doc("BOM", so.custom_item_bom)
 
         bom_items = bom_doc.get("custom_bom_items") or []
-
         if not bom_items:
             bom_items = bom_doc.get("items") or []
 
