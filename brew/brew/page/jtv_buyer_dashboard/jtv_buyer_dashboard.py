@@ -1,10 +1,13 @@
 import frappe
 from frappe.utils import get_url
 
+import frappe
+from frappe.utils import get_url
+
 @frappe.whitelist()
 def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
                          metal_group=None, department=None,
-                         date=None, customer_sku=None):   # ← customer hata diya
+                         from_date=None, to_date=None, customer_sku=None):
 
     start = int(start)
     page_length = int(page_length)
@@ -22,14 +25,16 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
     if metal_group:
         conditions.append("so.custom_metal_group = %s")
         values.insert(1, metal_group)
+
     if department:
         conditions.append("so.department = %s")
         values.insert(1, department)
-    if date:
-        conditions.append("DATE(so.transaction_date) = %s")
-        values.insert(1, date)
+    if from_date and to_date:
+        conditions.append("so.transaction_date BETWEEN %s AND %s")
+        values.insert(1, to_date)
+        values.insert(1, from_date)
     if customer_sku:
-        conditions.append("soi.custom_customer_sku = %s")
+        conditions.append("so.custom_customer_sku = %s")
         values.insert(1, customer_sku)
 
     condition_sql = " AND " + " AND ".join(conditions) if conditions else ""
@@ -38,7 +43,7 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
         SELECT
             so.name AS sales_order,
             so.po_no AS customer_po,
-            soi.custom_customer_sku AS customer_sku,
+            so.custom_customer_sku AS customer_sku,
             soi.qty AS order_qty,
             soi.rate AS unit_price,
             (soi.qty * soi.rate) AS extended_cost,
@@ -57,7 +62,6 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
         ORDER BY so.creation DESC
         LIMIT %s, %s
     """
-
     items = frappe.db.sql(query, tuple(values), as_dict=True)
 
     for row in items:
@@ -160,3 +164,14 @@ def get_so_bom_details(sales_order):
             })
 
     return result
+
+@frappe.whitelist()
+def get_top_companies(limit=3):
+    companies = frappe.get_all(
+        "Company",
+        filters={},
+        fields=["name"],
+        order_by="creation asc",
+        limit=limit
+    )
+    return [c.name for c in companies]
