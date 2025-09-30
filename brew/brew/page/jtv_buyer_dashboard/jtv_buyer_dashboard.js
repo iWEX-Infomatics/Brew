@@ -115,9 +115,9 @@ department_filter.$wrapper.css({
     let container = $(`<div class="bbj-container" style="overflow-x: auto;overflow-y: auto;height: 500px;"></div>`).appendTo(page.main);
 
     let table = $(`
-        <table class="table table-bordered table-striped" style="min-width: 3000px;margin-top:0px !important;">
+        <table class="table table-bordered" style="min-width: 3000px;margin-top:0px !important;">
         <thead style="position: sticky; top: 0; z-index: 100; background-color: white;">
-            <tr>
+            <tr style="background: #cccccc;">
                 <th></th>
                 <th>Picture</th>
                 <th>Order</th>
