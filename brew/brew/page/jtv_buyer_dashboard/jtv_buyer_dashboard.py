@@ -4,6 +4,9 @@ from frappe.utils import get_url
 import frappe
 from frappe.utils import get_url
 
+import frappe
+from frappe.utils import get_url
+
 @frappe.whitelist()
 def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
                          metal_group=None, department=None,
@@ -25,7 +28,6 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
     if metal_group:
         conditions.append("so.custom_metal_group = %s")
         values.insert(1, metal_group)
-
     if department:
         conditions.append("so.department = %s")
         values.insert(1, department)
@@ -69,6 +71,8 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
 
         # 🔹 Picture Logic
         picture_url = None
+
+        # 1️⃣ Check File attached on Sales Order Item
         file = frappe.get_all(
             "File",
             filters={
@@ -79,6 +83,8 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
             fields=["file_url", "file_name"], 
             order_by="creation asc"
         )
+
+        # 2️⃣ If not found, check File attached on Sales Order
         if not file:
             file = frappe.get_all(
                 "File",
@@ -90,15 +96,36 @@ def get_bbj_sales_orders(start=0, page_length=50, company=None, gemstone=None,
                 fields=["file_url", "file_name"], 
                 order_by="creation asc"
             )
+
+        # 3️⃣ If File found, pick first valid image
         if file:
             for f in file:
                 file_name = f.get("file_name", "").lower()
                 if any(ext in file_name for ext in ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg']):
-                    picture_url = get_url(f.file_url)
-                    break
+                    if f.file_url:
+                        picture_url = get_url(f.file_url)
+                        break
+
+        # 4️⃣ If still not found, check Image fields in Sales Order
+        if not picture_url:
+            so_doc = frappe.get_doc("Sales Order", row["sales_order"])
+            for field in so_doc.meta.get("fields"):
+                if (field.fieldtype in ["Attach", "Attach Image"] 
+                    or (field.fieldtype == "Image" and field.options) 
+                    or (field.fieldname and "image" in field.fieldname.lower() 
+                        and field.fieldtype in ["Data", "Small Text", "Text"])):
+                    
+                    val = so_doc.get(field.fieldname if field.fieldtype != "Image" else field.options)
+                    if val:
+                        picture_url = get_url(val)
+                        break
+
+        # 5️⃣ Last fallback: custom_image_product
         if not picture_url and row.get("custom_image_product"):
             picture_url = get_url(row["custom_image_product"])
-        row["picture"] = picture_url
+
+        # Final assignment → only if image found
+        row["picture"] = picture_url if picture_url else None
 
         # 🔹 Invoice Info
         inv = frappe.db.sql("""
